@@ -22,7 +22,7 @@ public class PtaMain {
         Options.v().setPhaseOption("cg.cha", "enabled:true");
 
         PackManager.v().getPack("wjtp").add(
-                new Transform("wjtp.pta", new PtaTransformer())
+                new Transform("wjtp.pta", new PtaTransformer(args[0]))
         );
         soot.Main.main(args);
     }
