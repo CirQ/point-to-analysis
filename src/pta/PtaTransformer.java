@@ -40,14 +40,22 @@ public class PtaTransformer extends SceneTransformer {
             else if(unit instanceof JAssignStmt){
                 if(((JAssignStmt)unit).getRightOp() instanceof JNewExpr){
                     if(allocSite != -1){
-                        ValueBox mem = ((JAssignStmt)unit).getLeftOpBox();
-                        solver.addAllocation(allocSite, mem);
+                        Value mem = ((JAssignStmt)unit).getLeftOp();
+                        if(mem instanceof JimpleLocal)
+                            solver.addAllocation(allocSite, (JimpleLocal)mem);
+                        else
+                            System.err.println("unhandled alloc exception");
                     }
                 }
                 else{
-                    ValueBox lvalue = ((JAssignStmt)unit).getLeftOpBox();
-                    ValueBox rvalue = ((JAssignStmt)unit).getRightOpBox();
-                    solver.addRedirection(lvalue, rvalue);
+                    Value lvalue = ((JAssignStmt)unit).getLeftOp();
+                    Value rvalue = ((JAssignStmt)unit).getRightOp();
+                    if((lvalue instanceof JimpleLocal) && (rvalue instanceof JimpleLocal)){
+                        solver.addRedirection((JimpleLocal)lvalue, (JimpleLocal)rvalue);
+                    }
+                    else{
+                        System.err.println("no");
+                    }
                 }
             }
         }
@@ -56,6 +64,10 @@ public class PtaTransformer extends SceneTransformer {
     private static void printResult(Map<Integer, Set<Integer>> result, PrintStream stream){
         for(Map.Entry<Integer, Set<Integer>> entry: result.entrySet()){
             stream.printf("%d: ", entry.getKey());
+            if(entry.getValue().size() == 0){
+                stream.println('#');
+                continue;
+            }
             int count = 0;
             for(Integer i: entry.getValue()){
                 stream.print(i);
