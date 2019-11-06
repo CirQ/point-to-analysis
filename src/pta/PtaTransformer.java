@@ -5,19 +5,17 @@ import soot.jimple.IntConstant;
 import soot.jimple.InvokeExpr;
 import soot.jimple.internal.*;
 
+import java.io.PrintStream;
+import java.util.List;
 import java.util.Map;
 
 public class PtaTransformer extends SceneTransformer {
-    private static final int LIST_SIZE = 0x100;
-
     private String scoi;    // coi stands for "class of interest"
-    private ValueBox[] allocSite;
-    private Object[] testSite;
+    private Solver solver;
 
     public PtaTransformer(String coi){
         this.scoi = coi;
-        this.allocSite = new ValueBox[LIST_SIZE];
-        this.testSite = new JimpleLocal[LIST_SIZE];
+        this.solver = new AndersonSolver();
     }
 
     private void extractSite(Body body){
@@ -34,7 +32,7 @@ public class PtaTransformer extends SceneTransformer {
                     else if(sig.equals("<benchmark.internal.Benchmark: void test(int,java.lang.Object)>")){
                         int index = ((IntConstant)invokeE.getArg(0)).value;
                         JimpleLocal ptr = (JimpleLocal)invokeE.getArg(1);
-                        testSite[index] = ptr;
+                        solver.addPointerTest(index, ptr);
                     }
                     else{ /* do nothing */ }
                 }
@@ -43,16 +41,28 @@ public class PtaTransformer extends SceneTransformer {
                 if(((JAssignStmt)unit).getRightOp() instanceof JNewExpr){
                     if(allocSite != -1){
                         ValueBox mem = ((JAssignStmt)unit).getLeftOpBox();
-                        this.allocSite[allocSite] = mem;
+                        solver.addAllocation(allocSite, mem);
                     }
                 }
                 else{
-                    // other dataflow
+                    ValueBox lvalue = ((JAssignStmt)unit).getLeftOpBox();
+                    ValueBox rvalue = ((JAssignStmt)unit).getRightOpBox();
+                    solver.addRedirection(lvalue, rvalue);
                 }
             }
         }
     }
 
+    private static void printResult(Map<Integer, List<Integer>> result, PrintStream stream){
+        for(Map.Entry<Integer, List<Integer>> entry: result.entrySet()){
+            stream.printf("%d: ", entry.getKey());
+            for(int i = 0; i < entry.getValue().size(); i++){
+                stream.print(entry.getValue().get(i));
+                char delim = (i == entry.getValue().size()-1) ? '\n': ' ';
+                stream.print(delim);
+            }
+        }
+    }
 
     @Override
     protected void internalTransform(String phaseName, Map<String, String> options) {
@@ -64,6 +74,6 @@ public class PtaTransformer extends SceneTransformer {
                 }
             }
         }
-        System.out.println(testSite.length);
+        printResult(solver.solve(), System.err);
     }
 }
