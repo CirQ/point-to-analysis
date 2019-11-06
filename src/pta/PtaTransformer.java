@@ -6,8 +6,8 @@ import soot.jimple.InvokeExpr;
 import soot.jimple.internal.*;
 
 import java.io.PrintStream;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class PtaTransformer extends SceneTransformer {
     private String scoi;    // coi stands for "class of interest"
@@ -53,12 +53,13 @@ public class PtaTransformer extends SceneTransformer {
         }
     }
 
-    private static void printResult(Map<Integer, List<Integer>> result, PrintStream stream){
-        for(Map.Entry<Integer, List<Integer>> entry: result.entrySet()){
+    private static void printResult(Map<Integer, Set<Integer>> result, PrintStream stream){
+        for(Map.Entry<Integer, Set<Integer>> entry: result.entrySet()){
             stream.printf("%d: ", entry.getKey());
-            for(int i = 0; i < entry.getValue().size(); i++){
-                stream.print(entry.getValue().get(i));
-                char delim = (i == entry.getValue().size()-1) ? '\n': ' ';
+            int count = 0;
+            for(Integer i: entry.getValue()){
+                stream.print(i);
+                char delim = (++count == entry.getValue().size()) ? '\n': ' ';
                 stream.print(delim);
             }
         }

@@ -8,7 +8,7 @@ import java.util.*;
 public class AndersonSolver implements Solver {
     private Map<Integer, ValueBox> allocSite;
     private Map<Integer, JimpleLocal> testSite;
-    private Map<Integer, List<Integer>> result;
+    private Map<Integer, Set<Integer>> result;
 
 
     public AndersonSolver(){
@@ -26,11 +26,11 @@ public class AndersonSolver implements Solver {
     }
 
     public void addPointerTest(int index, JimpleLocal jLocal) {
-        result.put(index, new LinkedList<>());
+        result.put(index, new TreeSet<>());
 
     }
 
-    public Map<Integer, List<Integer>> solve(){
+    public Map<Integer, Set<Integer>> solve(){
         return result;
     }
 }
